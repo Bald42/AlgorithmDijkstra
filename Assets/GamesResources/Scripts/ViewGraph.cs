@@ -37,10 +37,87 @@ public class ViewGraph : MonoBehaviour
     [SerializeField]
     private GameObject prefabWeight = null;
 
+    [Header("Materials")]
+    [SerializeField]
+    private Material materialWhite = null;
+
+    [SerializeField]
+    private Material materialGreen = null;
+
+    [SerializeField]
+    private Material materialRed = null;
+
     private Vector3 editorVector = Vector3.zero;
-    float distanceBetweenPoints = 0f;
-    GameObject point0 = null;
-    GameObject point1 = null;
+
+    private float distanceBetweenPoints = 0f;
+
+    private GameObject point0 = null;
+    private GameObject point1 = null;
+
+    private List<MeshRenderer> pointsMesh = new List<MeshRenderer>();
+    private List<EdgeMesh> edgeMeshs = new List<EdgeMesh>();
+    private EdgeMesh newEdgeMesh = new EdgeMesh ();
+
+    #region Subscribes / UnSubscribes
+    private void OnEnable()
+    {
+        Subscribe();
+    }
+
+    private void OnDisable()
+    {
+        UnSubscribe();
+    }
+
+    /// <summary>Подписки</summary>
+    private void Subscribe()
+    {
+        FindPath.OnPoint += OnPoint;
+    }
+
+    /// <summary>Отписки</summary>
+    private void UnSubscribe()
+    {
+        FindPath.OnPoint -= OnPoint;
+    }
+
+    /// <summary>
+    /// Обработчик события выделения вершины графа
+    /// </summary>
+    /// <param name="_newPoint"></param>
+    private void OnPoint (GameObject _newPoint, ColorMaterials.Color _color)
+    {
+        for (int i=0; i < pointsMesh.Count; i++)
+        {
+            if (pointsMesh[i].gameObject == _newPoint)
+            {
+                switch (_color)
+                {
+                    case ColorMaterials.Color.White:
+                        {
+                            pointsMesh[i].material = materialWhite;
+                            break;
+                        }
+                    case ColorMaterials.Color.Green:
+                        {
+                            pointsMesh[i].material = materialGreen;
+                            break;
+                        }
+                    case ColorMaterials.Color.Red:
+                        {
+                            pointsMesh[i].material = materialRed;
+                            break;
+                        }
+                    default:
+                        {
+                            break;
+                        }
+                }
+                break;
+            }
+        }
+    }
+    #endregion Subscribes / UnSubscribes 
 
     private void Awake()
     {
@@ -84,6 +161,7 @@ public class ViewGraph : MonoBehaviour
             string namePoint = Graph.Instance.Points[i].name;
             newNameObject.name = "Interface_" + namePoint;
             newNameObject.GetComponent<ViewText>().View(namePoint);
+            pointsMesh.Add(Graph.Instance.Points[i].GetComponent<MeshRenderer>());
         }
     }
 
@@ -129,8 +207,13 @@ public class ViewGraph : MonoBehaviour
             editorVector.z = distanceBetweenPoints;
             newEdge.transform.localScale = editorVector;
 
+            newEdgeMesh.Mesh.Clear();
+            newEdgeMesh.Mesh.Add(newEdge.GetComponent<MeshRenderer>());
+
             ViewArrow();
             ViewWeights(i);
+
+            edgeMeshs.Add(newEdgeMesh);
         }
     }
 
@@ -147,8 +230,14 @@ public class ViewGraph : MonoBehaviour
                                           parentArrows);
 
         newArrow.transform.LookAt(point1.transform);
-
         newArrow.name = "ArrowEdge_" + point0.name + "_" + point1.name;
+
+        MeshRenderer [] newArrowMeshs = newArrow.GetComponentsInChildren<MeshRenderer>();
+
+        for (int i = 0; i < newArrowMeshs.Length; i++)
+        {
+            newEdgeMesh.Mesh.Add(newArrowMeshs[i]);
+        }
     }
 
     /// <summary>
@@ -175,6 +264,13 @@ public class ViewGraph : MonoBehaviour
         newWeightsObject.GetComponent<ViewText>().View(Graph.Instance.Edges[_numberEdge].Weight.ToString());
     }
     #endregion StartViewGraph
+}
 
-
+/// <summary>
+/// Меши ребра
+/// </summary>
+[System.Serializable]
+public class EdgeMesh
+{
+    public List <MeshRenderer> Mesh = new List<MeshRenderer> ();
 }
