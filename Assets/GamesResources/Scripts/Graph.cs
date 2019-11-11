@@ -9,9 +9,7 @@ public class Graph : MonoBehaviour
 {
     public static Graph Instance = null;
 
-    public List<GameObject> Points = new List<GameObject>();
-
-    public List<Edge> Edges = new List<Edge>();
+    public List<GraphPoint> Points = new List<GraphPoint>();
 
     private void Awake()
     {
@@ -42,14 +40,21 @@ public class Graph : MonoBehaviour
 }
 
 /// <summary>
+/// Точка графа
+/// </summary>
+[System.Serializable]
+public class GraphPoint
+{
+    public GameObject Point = null;
+    public List<Edge> Edges = new List<Edge>();
+}
+
+/// <summary>
 /// Ребро
 /// </summary>
 [System.Serializable]
 public class Edge
 {
-    public GameObject Point0 = null;
-
-    public GameObject Point1 = null;
-
+    public GameObject PointEdge = null;
     public int Weight = 0;
 }

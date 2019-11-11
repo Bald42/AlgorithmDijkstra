@@ -348,61 +348,58 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Points:
-  - {fileID: 1352585040}
-  - {fileID: 99698735}
-  - {fileID: 1733016987}
-  - {fileID: 1450808733}
-  - {fileID: 929589282}
-  - {fileID: 998754783}
-  - {fileID: 72995215}
-  - {fileID: 442945132}
-  - {fileID: 719602567}
-  Edges:
-  - Point0: {fileID: 1352585040}
-    Point1: {fileID: 99698735}
-    Weight: 2
-  - Point0: {fileID: 1352585040}
-    Point1: {fileID: 1733016987}
-    Weight: 5
-  - Point0: {fileID: 1352585040}
-    Point1: {fileID: 442945132}
-    Weight: 7
-  - Point0: {fileID: 99698735}
-    Point1: {fileID: 1733016987}
-    Weight: 3
-  - Point0: {fileID: 99698735}
-    Point1: {fileID: 719602567}
-    Weight: 3
-  - Point0: {fileID: 1733016987}
-    Point1: {fileID: 1450808733}
-    Weight: 5
-  - Point0: {fileID: 1450808733}
-    Point1: {fileID: 929589282}
-    Weight: 6
-  - Point0: {fileID: 1450808733}
-    Point1: {fileID: 998754783}
-    Weight: 7
-  - Point0: {fileID: 929589282}
-    Point1: {fileID: 998754783}
-    Weight: 4
-  - Point0: {fileID: 929589282}
-    Point1: {fileID: 1352585040}
-    Weight: 7
-  - Point0: {fileID: 998754783}
-    Point1: {fileID: 72995215}
-    Weight: 2
-  - Point0: {fileID: 998754783}
-    Point1: {fileID: 442945132}
-    Weight: 5
-  - Point0: {fileID: 72995215}
-    Point1: {fileID: 442945132}
-    Weight: 10
-  - Point0: {fileID: 442945132}
-    Point1: {fileID: 719602567}
-    Weight: 8
-  - Point0: {fileID: 719602567}
-    Point1: {fileID: 1352585040}
-    Weight: 4
+  - Point: {fileID: 1352585040}
+    Edges:
+    - PointEdge: {fileID: 99698735}
+      Weight: 2
+    - PointEdge: {fileID: 1450808733}
+      Weight: 3
+  - Point: {fileID: 99698735}
+    Edges:
+    - PointEdge: {fileID: 1733016987}
+      Weight: 5
+    - PointEdge: {fileID: 442945132}
+      Weight: 7
+  - Point: {fileID: 1733016987}
+    Edges:
+    - PointEdge: {fileID: 1450808733}
+      Weight: 5
+  - Point: {fileID: 1450808733}
+    Edges:
+    - PointEdge: {fileID: 929589282}
+      Weight: 8
+    - PointEdge: {fileID: 72995215}
+      Weight: 5
+  - Point: {fileID: 929589282}
+    Edges:
+    - PointEdge: {fileID: 1352585040}
+      Weight: 4
+    - PointEdge: {fileID: 998754783}
+      Weight: 9
+    - PointEdge: {fileID: 442945132}
+      Weight: 1
+  - Point: {fileID: 998754783}
+    Edges:
+    - PointEdge: {fileID: 72995215}
+      Weight: 7
+    - PointEdge: {fileID: 1733016987}
+      Weight: 3
+  - Point: {fileID: 72995215}
+    Edges:
+    - PointEdge: {fileID: 442945132}
+      Weight: 6
+  - Point: {fileID: 442945132}
+    Edges:
+    - PointEdge: {fileID: 719602567}
+      Weight: 3
+    - PointEdge: {fileID: 1352585040}
+      Weight: 3
+  - Point: {fileID: 719602567}
+    Edges:
+    - PointEdge: {fileID: 1352585040}
+      Weight: 5
+    - PointEdge: {fileID: 99698735}
+      Weight: 3
 --- !u!1 &133796722
 GameObject:
   m_ObjectHideFlags: 0

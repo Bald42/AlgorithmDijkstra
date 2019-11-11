@@ -48,7 +48,7 @@ public class FindPath : MonoBehaviour
         {
             yield return null;
         }
-
+        /*
         int countEdge = Graph.Instance.Edges.Count;
 
         for (int i = 0; i < Graph.Instance.Edges.Count; i++)
@@ -73,7 +73,7 @@ public class FindPath : MonoBehaviour
                 points.Add(newPointGraph);
                 countEdge--;
             }
-        }
+        }*/
     }
 
     private void Update()
@@ -147,7 +147,7 @@ public class FindPath : MonoBehaviour
         listDijkstra.Clear();
         int numberStart = 0;
         int numberEnd = 0;
-
+        /*
         for (int i = 0; i < points.Count; i++)
         {
             Dijkstra newDijkstra = new Dijkstra();
@@ -176,6 +176,7 @@ public class FindPath : MonoBehaviour
                 //находим номер смежной вершины
                 for (int k = 0; k < points.Count; k++)
                 {
+                    
                     if (points[i].Edges[j].Point1 == points[k].Point)
                     {
                         if (points[i].Edges[j].Weight < listDijkstra[k].Distance)
@@ -184,12 +185,9 @@ public class FindPath : MonoBehaviour
                             listDijkstra[k].Point = i;
                         }
                     }
+                    
                 }
-
-
-            }
-        }
-
+            }*/
         return true;
     }
 }

@@ -154,14 +154,14 @@ public class ViewGraph : MonoBehaviour
         for (int i = 0; i < Graph.Instance.Points.Count; i++)
         {
             GameObject newNameObject = Instantiate(prefabName, 
-                                                   PositionInCanvas(Graph.Instance.Points[i].transform.position), 
+                                                   PositionInCanvas(Graph.Instance.Points[i].Point.transform.position), 
                                                    Quaternion.identity, 
                                                    parentNames);
 
-            string namePoint = Graph.Instance.Points[i].name;
+            string namePoint = Graph.Instance.Points[i].Point.name;
             newNameObject.name = "Interface_" + namePoint;
             newNameObject.GetComponent<ViewText>().View(namePoint);
-            pointsMesh.Add(Graph.Instance.Points[i].GetComponent<MeshRenderer>());
+            pointsMesh.Add(Graph.Instance.Points[i].Point.GetComponent<MeshRenderer>());
         }
     }
 
@@ -184,36 +184,41 @@ public class ViewGraph : MonoBehaviour
     /// </summary>
     private void ViewEdges ()
     {
-        for (int i=0; i < Graph.Instance.Edges.Count; i ++)
+        for (int i=0; i < Graph.Instance.Points.Count; i ++)
         {
-            point0 = Graph.Instance.Edges[i].Point0;
-            point1 = Graph.Instance.Edges[i].Point1;
+            point0 = Graph.Instance.Points[i].Point;
 
-            distanceBetweenPoints = (point0.transform.position -
-                                     point1.transform.position).magnitude;
+            for (int j = 0; j < Graph.Instance.Points[i].Edges.Count; j++)
+            {
+                point1 = Graph.Instance.Points[i].Edges[j].PointEdge;
+                int _weight = Graph.Instance.Points[i].Edges[j].Weight;
 
-            PointOnSegment(point0.transform.position, point1.transform.position, 0.5f);            
+                distanceBetweenPoints = (point0.transform.position -
+                                         point1.transform.position).magnitude;
 
-            GameObject newEdge = Instantiate(prefabEdge,
-                                             editorVector,
-                                             Quaternion.identity,
-                                             parentEdges);
+                PointOnSegment(point0.transform.position, point1.transform.position, 0.5f);
 
-            newEdge.transform.LookAt(point1.transform);
+                GameObject newEdge = Instantiate(prefabEdge,
+                                                 editorVector,
+                                                 Quaternion.identity,
+                                                 parentEdges);
 
-            newEdge.name = "Edge_" + point0.name + "_" + point1.name;
+                newEdge.transform.LookAt(point1.transform);
 
-            editorVector = newEdge.transform.localScale;
-            editorVector.z = distanceBetweenPoints;
-            newEdge.transform.localScale = editorVector;
+                newEdge.name = "Edge_" + point0.name + "_" + point1.name;
 
-            newEdgeMesh.Mesh.Clear();
-            newEdgeMesh.Mesh.Add(newEdge.GetComponent<MeshRenderer>());
+                editorVector = newEdge.transform.localScale;
+                editorVector.z = distanceBetweenPoints;
+                newEdge.transform.localScale = editorVector;
 
-            ViewArrow();
-            ViewWeights(i);
+                newEdgeMesh.Mesh.Clear();
+                newEdgeMesh.Mesh.Add(newEdge.GetComponent<MeshRenderer>());
 
-            edgeMeshs.Add(newEdgeMesh);
+                ViewArrow();
+                ViewWeights(_weight);
+
+                edgeMeshs.Add(newEdgeMesh);
+            }
         }
     }
 
@@ -252,7 +257,7 @@ public class ViewGraph : MonoBehaviour
     /// <summary>
     /// Показываем веса рёбер
     /// </summary>
-    private void ViewWeights(int _numberEdge)
+    private void ViewWeights(int _weight)
     {
         GameObject newWeightsObject = Instantiate(prefabWeight,
                                                   PositionInCanvas(editorVector),
@@ -261,7 +266,7 @@ public class ViewGraph : MonoBehaviour
 
         string nameEdge = point0.name + "_" + point1.name;
         newWeightsObject.name = "InterfacenewWeights_" + nameEdge;
-        newWeightsObject.GetComponent<ViewText>().View(Graph.Instance.Edges[_numberEdge].Weight.ToString());
+        newWeightsObject.GetComponent<ViewText>().View(_weight.ToString());
     }
     #endregion StartViewGraph
 }
