@@ -20,10 +20,8 @@ public class FindPath : MonoBehaviour
     private GameObject point1 = null;
 
     [SerializeField]
-    private List<PointGraph> points = new List<PointGraph>();
-
-    [SerializeField]
-    private List<Dijkstra> listDijkstra = new List<Dijkstra>();
+    private List<DijkstraGraphPoint> graphPoints = new List<DijkstraGraphPoint> ();
+    //private List<DijkstraGraphPoint> graphPoints = new List<DijkstraGraphPoint>();
 
     private void Awake()
     {
@@ -48,32 +46,24 @@ public class FindPath : MonoBehaviour
         {
             yield return null;
         }
+
         /*
-        int countEdge = Graph.Instance.Edges.Count;
-
-        for (int i = 0; i < Graph.Instance.Edges.Count; i++)
+        for (int i=0; i < Graph.Instance.Points.Count; i++)
         {
-            bool isFind = false;
+            DijkstraGraphPoint newGraphPoint = new DijkstraGraphPoint();
+            newGraphPoint.Point = Graph.Instance.Points[i].Point;
+            newGraphPoint.NextPoints = new List<DijkstraGraphPoint>();
 
-            for (int j = 0; j < points.Count; j++)
+            for (int j = 0; j < Graph.Instance.Points[i].Edges.Count; j ++)
             {
-                if (Graph.Instance.Edges[i].Point0 == points[j].Point)
-                {
-                    isFind = true;
-                    points[j].Edges.Add(Graph.Instance.Edges[i]);
-                    break;
-                }
+                DijkstraGraphPoint newGraphPoint2 = new DijkstraGraphPoint();
+                newGraphPoint2.Weight = Graph.Instance.Points[i].Edges[j].Weight;                
+                newGraphPoint2.Point = Graph.Instance.Points[i].Edges[j].PointEdge;
+                newGraphPoint.NextPoints.Add(newGraphPoint2);
             }
-
-            if (!isFind)
-            {
-                PointGraph newPointGraph = new PointGraph();
-                newPointGraph.Point = Graph.Instance.Edges[i].Point0;
-                newPointGraph.Edges.Add(Graph.Instance.Edges[i]);
-                points.Add(newPointGraph);
-                countEdge--;
-            }
-        }*/
+            graphPoints.Add(newGraphPoint);
+        }
+        */
     }
 
     private void Update()
@@ -123,11 +113,19 @@ public class FindPath : MonoBehaviour
                 if (point1)
                 {
                     OnPoint(point1, ColorMaterials.Color.White);
-                    point1 = null;
                 }
 
-                point1 = _point;
-
+                if (point1 == _point)
+                {                    
+                    point1 = null;
+                }
+                else
+                {
+                    point1 = _point;
+                    OnPoint(point1, ColorMaterials.Color.Red);
+                    GetPath();
+                }
+                /*
                 //TODO исправить на отрицание
                 if (IsFindPathDijkstra())
                 {
@@ -137,148 +135,222 @@ public class FindPath : MonoBehaviour
                 {
                     OnPoint(point1, ColorMaterials.Color.Green);
                 }
+                */
             }
         }
     }
 
 
-    private bool IsFindPathDijkstra()
+    private void GetPath()
     {
-        listDijkstra.Clear();
-        int numberStart = 0;
-        int numberEnd = 0;
-        /*
-        for (int i = 0; i < points.Count; i++)
+        NewListDijlstra();
+        GameObject newPoint = point0;
+        int weightPath = 0;
+        bool isFind = false;
+
+        while (!isFind)
         {
-            Dijkstra newDijkstra = new Dijkstra();
-            listDijkstra.Add(newDijkstra);
-
-            if (point0 == points[i].Point)
+            for (int i = 0; i < graphPoints.Count; i++)
             {
-                numberStart = i;
-            }
-
-            if (point1 == points[i].Point)
-            {
-                numberEnd = i;
-            }
-        }
-
-        listDijkstra[0].isFind = true;
-        listDijkstra[0].Point = numberStart;
-
-        //проходим по всем вершинам
-        for (int i = 0; i < points.Count; i++)
-        {
-            //проходим по рёбрам этой вершины
-            for (int j = 0; j < points[i].Edges.Count; j++)
-            {
-                //находим номер смежной вершины
-                for (int k = 0; k < points.Count; k++)
+                if (Graph.Instance.Points[i].Point == newPoint)
                 {
-                    
-                    if (points[i].Edges[j].Point1 == points[k].Point)
+                    Debug.LogError("0");
+                    for (int j = 0; j < Graph.Instance.Points[i].Edges.Count; j++)
                     {
-                        if (points[i].Edges[j].Weight < listDijkstra[k].Distance)
+                        for (int k = 0; k < Graph.Instance.Points.Count; k++)
                         {
-                            listDijkstra[k].Distance = points[i].Edges[j].Weight;
-                            listDijkstra[k].Point = i;
+                            if (Graph.Instance.Points[i].Edges[j].PointEdge == Graph.Instance.Points[k].Point)
+                            {
+                                Debug.LogError("1");
+                                Debug.LogError("Graph.Instance.Points[k].Point = " + Graph.Instance.Points[k].Point);
+                                if (Graph.Instance.Points[i].Edges[j].Weight < graphPoints[k].Weight)
+                                {
+                                    Debug.LogError("2");
+                                    Debug.LogError("graphPoints[k].Weight = " + graphPoints[k].Weight);
+                                    graphPoints[k].Weight = Graph.Instance.Points[i].Edges[j].Weight + weightPath;
+                                    graphPoints[k].index = i;
+                                }
+                            }
                         }
                     }
-                    
+                    break;
                 }
-            }*/
-        return true;
+            }
+
+            int min = int.MaxValue;
+            int minIndex = -1;
+
+            for (int i = 0; i < graphPoints.Count; i++)
+            {
+                if (!graphPoints[i].isActive && graphPoints[i].Weight < min)
+                {
+                    min = graphPoints[i].Weight;
+                    minIndex = i;
+                }
+            }            
+
+            if (minIndex == -1)
+            {
+                Debug.LogError("NotFind");
+                return;
+            }
+
+            graphPoints[minIndex].isActive = true;
+            weightPath += min;
+
+            if (Graph.Instance.Points[minIndex].Point == point1)
+            {
+                Debug.LogError("find");                
+                isFind = true;
+            }
+            else
+            {
+                newPoint = graphPoints[minIndex].Point;
+            }
+        }
+
+
+
     }
+
+
+
+    private void NewListDijlstra ()
+    {
+        graphPoints.Clear();        
+
+        for (int i = 0; i < Graph.Instance.Points.Count; i++)
+        {
+            DijkstraGraphPoint newPoint = new DijkstraGraphPoint();
+
+            if (Graph.Instance.Points[i].Point == point0)
+            {
+                newPoint.Weight = 0;
+                newPoint.isActive = true;
+            }
+            
+            newPoint.Point = Graph.Instance.Points[i].Point;
+            graphPoints.Add(newPoint);
+        }        
+    }
+
+    /// <summary>
+    /// Поиск пути
+    /// </summary>
+    /*private void GetPath()
+    {
+        DijkstraGraphPoint p1 = new DijkstraGraphPoint();
+        DijkstraGraphPoint p2 = new DijkstraGraphPoint();
+        List<DijkstraGraphPoint> notVisited = new List<DijkstraGraphPoint>();
+
+        for (int i = 0; i < Graph.Instance.Points.Count; i++)
+        {
+            if (Graph.Instance.Points[i].Point == point0)
+            {
+                p1 = graphPoints[i];
+            }
+
+            if (Graph.Instance.Points[i].Point == point1)
+            {
+                p2 = graphPoints[i];
+            }
+
+            notVisited.Add(graphPoints[i]);
+        }
+
+        Dictionary<DijkstraGraphPoint, DijkstraPoint> path = new Dictionary <DijkstraGraphPoint, DijkstraPoint> ();
+
+        path.Add(p1, new DijkstraPoint() { PrevPoint = null, Weight = 0 });
+
+        Debug.LogError("0");
+
+        while (true)
+        {
+            DijkstraGraphPoint currentPoint = null;
+            int bestWeight = int.MaxValue;
+            Debug.LogError("1");
+            foreach (var p in notVisited)
+            {
+                if (path.ContainsKey(p) && path[p].Weight < bestWeight)
+                {
+                    
+                    currentPoint = p;
+                    bestWeight = path[p].Weight;
+                    Debug.LogError("2");
+                    Debug.LogError("currentPoint = " + currentPoint);
+                }
+            }
+
+            if (currentPoint == null)
+            {
+                //нет пути
+                Debug.LogError("6");
+                return;
+            }
+
+            if (currentPoint == p2)
+            {
+                Debug.LogError("7");
+                break;
+            }
+
+            foreach (var next in currentPoint.NextPoints)
+            {
+                Debug.LogError("3");
+                int w = path[currentPoint].Weight + next.Weight;
+                Debug.LogError("path[currentPoint].Weight = " + path[currentPoint].Weight);
+                Debug.LogError("next.Weight = " + next.Weight);
+
+                if (!path.ContainsKey(next) || path[next].Weight > w)
+                {
+                    Debug.LogError("333");
+                    path[next] = new DijkstraPoint() { PrevPoint = currentPoint, Weight = w };
+                }
+            }
+
+            notVisited.Remove(currentPoint);
+        }
+
+        List<DijkstraGraphPoint> ret = new List<DijkstraGraphPoint>();
+
+        var end = p2;
+
+        Debug.LogError("4");
+        while (end != null)
+        {
+            Debug.LogError("5");
+            ret.Add(end);
+            end = path[end].PrevPoint;
+            OnPoint(end.Point, ColorMaterials.Color.Red);
+        }
+    }*/
+
+
 }
 
-/// <summary>
-/// Ребро
-/// </summary>
 [System.Serializable]
-public class PointGraph
+public class DijkstraGraphPoint
 {
+    public int Weight = int.MaxValue;
     public GameObject Point = null;
-    public List<Edge> Edges = new List<Edge>();
-}
-
-/// <summary>
-/// Элементы массива дейкстры
-/// </summary>
-[System.Serializable]
-public class Dijkstra
-{
-    public bool isFind = false;
-    public int Distance = int.MaxValue;
-    public int Point = -1;
+    public bool isActive = false;
+    public int index = 0;
 }
 
 /*
-public class GraphPoint
+[System.Serializable]
+public class DijkstraGraphPoint
 {
-    public int Weight;
-    public List<GraphPoint> NextPoints;
+    public int Weight = 0;
+    public GameObject Point = null;
+    public List<DijkstraGraphPoint> NextPoints;
 }
 
+[System.Serializable]
 public class DijkstraPoint
 {
-    public int Weight;
-    public GraphPoint PrevPoint;
-}
-
-public List GetPath(List points, GraphPoint p1, GraphPoint p2)
-{
-    List notVisited = points.ToList();
-    Dictionary<GraphPoint, DijkstraPoint> path = new Dictionar <GraphPoint, DijkstraPoint>();
-
-    path.Add(p1, new DijkstraPoint() { PrevPoint = null, Weight = 0 });
-
-    while (true)
-    {
-        GraphPoint currentPoint = null;
-        int bestWeight = int.MaxValue;
-
-        foreach (var p in notVisited)
-        {
-            if (path.ContainsKey(p) && path[p].Weight < bestWeight)
-            {
-                currentPoint = p;
-                bestWeight = path[p].Weight;
-            }
-        }
-
-        if (currentPoint == null)
-        {
-            return null;
-        }
-
-        if (currentPoint == p2)
-        {
-            break;
-        }
-
-        foreach (var next in currentPoint.NextPoints)
-        {
-            int w = path[currentPoint].Weight + next.Weight;
-            if (!path.ContainsKey(next) || path[next].Weight > w)
-            {
-                path[next] = new DijkstraPoint() { PrevPoint = currentPoint, Weight = w };
-            }
-        }
-
-        notVisited.Remove(currentPoint);
-    }
-
-    List ret = new List <GameObject> ();
-
-    var end = p2;
-
-    while (end != null)
-    {
-        ret.Add(end);
-        end = path[end].PrevPoint;
-    }
-
-    return ret;
+    public int Weight = 0;
+    public DijkstraGraphPoint PrevPoint;
 }
 */
+
