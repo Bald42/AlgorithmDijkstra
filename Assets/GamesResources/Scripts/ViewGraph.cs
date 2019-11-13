@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// Отображаем граф
@@ -47,6 +48,10 @@ public class ViewGraph : MonoBehaviour
     [SerializeField]
     private Material materialRed = null;
 
+    [Header("Text")]
+    [SerializeField]
+    private Text textInfo = null;
+
     private Vector3 editorVector = Vector3.zero;
 
     private float distanceBetweenPoints = 0f;
@@ -73,19 +78,29 @@ public class ViewGraph : MonoBehaviour
     private void Subscribe()
     {
         FindPath.OnPoint += OnPoint;
+        FindPath.OnViewText += OnViewText;
     }
 
     /// <summary>Отписки</summary>
     private void UnSubscribe()
     {
         FindPath.OnPoint -= OnPoint;
+        FindPath.OnViewText -= OnViewText;
+    }
+
+    /// <summary>
+    /// Обработчик события вывода информации
+    /// </summary>
+    /// <param name="_info"></param>
+    private void OnViewText (string _info)
+    {
+        textInfo.text = _info;
     }
 
     /// <summary>
     /// Обработчик события выделения вершины графа
     /// </summary>
-    /// <param name="_newPoint"></param>
-    private void OnPoint (GameObject _newPoint, ColorMaterials.Color _color)
+    private void OnPoint (GameObject _newPoint, ColorMaterials _color)
     {
         for (int i=0; i < pointsMesh.Count; i++)
         {
@@ -93,17 +108,17 @@ public class ViewGraph : MonoBehaviour
             {
                 switch (_color)
                 {
-                    case ColorMaterials.Color.White:
+                    case ColorMaterials.White:
                         {
                             pointsMesh[i].material = materialWhite;
                             break;
                         }
-                    case ColorMaterials.Color.Green:
+                    case ColorMaterials.Green:
                         {
                             pointsMesh[i].material = materialGreen;
                             break;
                         }
-                    case ColorMaterials.Color.Red:
+                    case ColorMaterials.Red:
                         {
                             pointsMesh[i].material = materialRed;
                             break;

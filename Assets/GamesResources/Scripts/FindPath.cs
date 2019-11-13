@@ -7,8 +7,11 @@ using UnityEngine;
 /// </summary>
 public class FindPath : MonoBehaviour
 {
-    public delegate void PoinEventHandler(GameObject newPoint, ColorMaterials.Color color);
+    public delegate void PoinEventHandler(GameObject newPoint, ColorMaterials color);
     public static event PoinEventHandler OnPoint = delegate { };
+
+    public delegate void ViewTextHandler (string info);
+    public static event ViewTextHandler OnViewText = delegate { };
 
     [SerializeField]
     private Camera mainCamera = null;
@@ -25,48 +28,7 @@ public class FindPath : MonoBehaviour
     [SerializeField]
     private List<GameObject> dijkstraPath = new List<GameObject>();
 
-    private void Awake()
-    {
-        Init();
-    }
-
-    /// <summary>
-    /// Инициализация
-    /// </summary>
-    private void Init ()
-    {
-        StartCoroutine(FindGraph());
-    }
-
-    /// <summary>
-    /// Поиск  всех путей
-    /// </summary>
-    /// <returns></returns>
-    private IEnumerator FindGraph()
-    {
-        while (!Graph.Instance)
-        {
-            yield return null;
-        }
-
-        /*
-        for (int i=0; i < Graph.Instance.Points.Count; i++)
-        {
-            DijkstraGraphPoint newGraphPoint = new DijkstraGraphPoint();
-            newGraphPoint.Point = Graph.Instance.Points[i].Point;
-            newGraphPoint.NextPoints = new List<DijkstraGraphPoint>();
-
-            for (int j = 0; j < Graph.Instance.Points[i].Edges.Count; j ++)
-            {
-                DijkstraGraphPoint newGraphPoint2 = new DijkstraGraphPoint();
-                newGraphPoint2.Weight = Graph.Instance.Points[i].Edges[j].Weight;                
-                newGraphPoint2.Point = Graph.Instance.Points[i].Edges[j].PointEdge;
-                newGraphPoint.NextPoints.Add(newGraphPoint2);
-            }
-            graphPoints.Add(newGraphPoint);
-        }
-        */
-    }
+    private List<GameObject> tempPath = new List<GameObject>();
 
     private void Update()
     {
@@ -97,25 +59,22 @@ public class FindPath : MonoBehaviour
         if (!point0)
         {
             point0 = _point;     
-            OnPoint(point0, ColorMaterials.Color.Red);
+            OnPoint(point0, ColorMaterials.Red);
         }
         else
         {
             if (point0 == _point)
             {
-               // if (point1)
-                //{
-                //    OnPoint(point1, ColorMaterials.Color.White);
-                //}
-                //ViewPath(ColorMaterials.Color.White);
+                OnPoint(point0, ColorMaterials.White);
                 ClearPath();
                 point0 = null;
+                point1 = null;
             }
             else
             {
                 if (point1)
                 {
-                    OnPoint(point1, ColorMaterials.Color.White);
+                    OnPoint(point1, ColorMaterials.White);
                 }
 
                 if (point1 == _point)
@@ -125,9 +84,9 @@ public class FindPath : MonoBehaviour
                 else
                 {
                     point1 = _point;
-                    OnPoint(point1, ColorMaterials.Color.Red);
+                    OnPoint(point1, ColorMaterials.Red);
                     GetPath();
-                    ViewPath(ColorMaterials.Color.Green);
+                    ViewPath(ColorMaterials.Green);
                 }
             }
         }
@@ -148,7 +107,6 @@ public class FindPath : MonoBehaviour
             {
                 if (Graph.Instance.Points[i].Point == newPoint)
                 {
-                    Debug.LogError("0");
                     for (int j = 0; j < Graph.Instance.Points[i].Edges.Count; j++)
                     {
                         for (int k = 0; k < Graph.Instance.Points.Count; k++)
@@ -159,11 +117,6 @@ public class FindPath : MonoBehaviour
                                 {
                                     graphPoints[k].Weight = Graph.Instance.Points[i].Edges[j].Weight + weightPath;
                                     graphPoints[k].index = i;
-                                    Debug.LogError("1");
-                                    Debug.LogError("Graph.Instance.Points[k].Point = " + Graph.Instance.Points[k].Point);
-                                    Debug.LogError("graphPoints[k].Weight = " + graphPoints[k].Weight);
-                                    //TODO найти правильный индекс
-                                    Debug.LogError("graphPoints[k].index = " + graphPoints[k].index);
                                 }
                             }
                         }
@@ -187,13 +140,13 @@ public class FindPath : MonoBehaviour
             if (minIndex == -1)
             {
                 Debug.LogError("NotFind");
+                OnViewText("нет пути " + point0.name + "-" + point1.name);
                 return;
             }
 
             graphPoints[minIndex].isActive = true;
             weightPath = min;
 
-            Debug.LogError("weightPath = " + weightPath);
             if (Graph.Instance.Points[minIndex].Point == point1)
             {
                 Debug.LogError("find");                
@@ -202,7 +155,6 @@ public class FindPath : MonoBehaviour
             else
             {
                 newPoint = graphPoints[minIndex].Point;
-                Debug.LogError("newPoint = " + newPoint.name);
             }
         }
         CreatePath();        
@@ -235,9 +187,9 @@ public class FindPath : MonoBehaviour
     /// </summary>
     private void ClearPath()
     {
-        for (int i = 0; i < dijkstraPath.Count; i++)
+        for (int i = 1; i < dijkstraPath.Count; i++)
         {
-            OnPoint(dijkstraPath[i], ColorMaterials.Color.White);
+            OnPoint(dijkstraPath[i], ColorMaterials.White);
         }
         dijkstraPath.Clear();
     }
@@ -249,35 +201,40 @@ public class FindPath : MonoBehaviour
     {
         bool _isFindPath = false;
         GameObject _currentPoint = point1;
-        List<GameObject> tempPath = new List<GameObject>();
+        tempPath.Clear();
+        string _textPath = "";
 
         while (!_isFindPath)
         {
-            for (int i = graphPoints.Count-1; i >= 0; i--)
+            for (int i = 0; i < graphPoints.Count; i++)
             {
                 if (graphPoints[i].Point == _currentPoint)
                 {
-                    dijkstraPath.Add(_currentPoint);
+                    tempPath.Add(_currentPoint);
                     _currentPoint = graphPoints[graphPoints[i].index].Point;
                 }
             }
 
             if (_currentPoint == point0)
             {
+                tempPath.Add(_currentPoint);
                 _isFindPath = true;
             }
         }
 
-        /*for (int i = tempPath.Count-1; i >=0 ;i--)
+        for (int i = tempPath.Count - 1; i >= 0; i--)
         {
             dijkstraPath.Add(tempPath[i]);
-        }*/
+            _textPath += tempPath[i].name + " - ";
+        }
+
+        OnViewText(_textPath);
     }
 
     /// <summary>
     /// Показываем путь
     /// </summary>
-    private void ViewPath (ColorMaterials.Color _color)
+    private void ViewPath (ColorMaterials _color)
     {
         for (int i = 1; i < dijkstraPath.Count; i++)
         {
@@ -286,6 +243,9 @@ public class FindPath : MonoBehaviour
     }
 }
 
+/// <summary>
+/// 
+/// </summary>
 [System.Serializable]
 public class DijkstraGraphPoint
 {
