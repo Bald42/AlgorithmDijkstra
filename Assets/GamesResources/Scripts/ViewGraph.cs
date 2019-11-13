@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// Отображаем граф
@@ -37,10 +38,101 @@ public class ViewGraph : MonoBehaviour
     [SerializeField]
     private GameObject prefabWeight = null;
 
+    [Header("Materials")]
+    [SerializeField]
+    private Material materialWhite = null;
+
+    [SerializeField]
+    private Material materialGreen = null;
+
+    [SerializeField]
+    private Material materialRed = null;
+
+    [Header("Text")]
+    [SerializeField]
+    private Text textInfo = null;
+
     private Vector3 editorVector = Vector3.zero;
-    float distanceBetweenPoints = 0f;
-    GameObject point0 = null;
-    GameObject point1 = null;
+
+    private float distanceBetweenPoints = 0f;
+
+    private GameObject point0 = null;
+    private GameObject point1 = null;
+
+    private List<MeshRenderer> pointsMesh = new List<MeshRenderer>();
+    private List<EdgeMesh> edgeMeshs = new List<EdgeMesh>();
+    private EdgeMesh newEdgeMesh = new EdgeMesh ();
+
+    #region Subscribes / UnSubscribes
+    private void OnEnable()
+    {
+        Subscribe();
+    }
+
+    private void OnDisable()
+    {
+        UnSubscribe();
+    }
+
+    /// <summary>Подписки</summary>
+    private void Subscribe()
+    {
+        FindPath.OnPoint += OnPoint;
+        FindPath.OnViewText += OnViewText;
+    }
+
+    /// <summary>Отписки</summary>
+    private void UnSubscribe()
+    {
+        FindPath.OnPoint -= OnPoint;
+        FindPath.OnViewText -= OnViewText;
+    }
+
+    /// <summary>
+    /// Обработчик события вывода информации
+    /// </summary>
+    /// <param name="_info"></param>
+    private void OnViewText (string _info)
+    {
+        textInfo.text = _info;
+    }
+
+    /// <summary>
+    /// Обработчик события выделения вершины графа
+    /// </summary>
+    private void OnPoint (GameObject _newPoint, ColorMaterials _color)
+    {
+        for (int i=0; i < pointsMesh.Count; i++)
+        {
+            if (pointsMesh[i].gameObject == _newPoint)
+            {
+                switch (_color)
+                {
+                    case ColorMaterials.White:
+                        {
+                            pointsMesh[i].material = materialWhite;
+                            break;
+                        }
+                    case ColorMaterials.Green:
+                        {
+                            pointsMesh[i].material = materialGreen;
+                            break;
+                        }
+                    case ColorMaterials.Red:
+                        {
+                            pointsMesh[i].material = materialRed;
+                            break;
+                        }
+                    default:
+                        {
+                            break;
+                        }
+                }
+                break;
+            }
+        }
+    }
+    #endregion Subscribes / UnSubscribes 
 
     private void Awake()
     {
@@ -77,13 +169,14 @@ public class ViewGraph : MonoBehaviour
         for (int i = 0; i < Graph.Instance.Points.Count; i++)
         {
             GameObject newNameObject = Instantiate(prefabName, 
-                                                   PositionInCanvas(Graph.Instance.Points[i].transform.position), 
+                                                   PositionInCanvas(Graph.Instance.Points[i].Point.transform.position), 
                                                    Quaternion.identity, 
                                                    parentNames);
 
-            string namePoint = Graph.Instance.Points[i].name;
+            string namePoint = Graph.Instance.Points[i].Point.name;
             newNameObject.name = "Interface_" + namePoint;
             newNameObject.GetComponent<ViewText>().View(namePoint);
+            pointsMesh.Add(Graph.Instance.Points[i].Point.GetComponent<MeshRenderer>());
         }
     }
 
@@ -106,31 +199,41 @@ public class ViewGraph : MonoBehaviour
     /// </summary>
     private void ViewEdges ()
     {
-        for (int i=0; i < Graph.Instance.Edges.Count; i ++)
+        for (int i=0; i < Graph.Instance.Points.Count; i ++)
         {
-            point0 = Graph.Instance.Edges[i].Point0;
-            point1 = Graph.Instance.Edges[i].Point1;
+            point0 = Graph.Instance.Points[i].Point;
 
-            distanceBetweenPoints = (point0.transform.position -
-                                     point1.transform.position).magnitude;
+            for (int j = 0; j < Graph.Instance.Points[i].Edges.Count; j++)
+            {
+                point1 = Graph.Instance.Points[i].Edges[j].PointEdge;
+                int _weight = Graph.Instance.Points[i].Edges[j].Weight;
 
-            PointOnSegment(point0.transform.position, point1.transform.position, 0.5f);            
+                distanceBetweenPoints = (point0.transform.position -
+                                         point1.transform.position).magnitude;
 
-            GameObject newEdge = Instantiate(prefabEdge,
-                                             editorVector,
-                                             Quaternion.identity,
-                                             parentEdges);
+                PointOnSegment(point0.transform.position, point1.transform.position, 0.5f);
 
-            newEdge.transform.LookAt(point1.transform);
+                GameObject newEdge = Instantiate(prefabEdge,
+                                                 editorVector,
+                                                 Quaternion.identity,
+                                                 parentEdges);
 
-            newEdge.name = "Edge_" + point0.name + "_" + point1.name;
+                newEdge.transform.LookAt(point1.transform);
 
-            editorVector = newEdge.transform.localScale;
-            editorVector.z = distanceBetweenPoints;
-            newEdge.transform.localScale = editorVector;
+                newEdge.name = "Edge_" + point0.name + "_" + point1.name;
 
-            ViewArrow();
-            ViewWeights(i);
+                editorVector = newEdge.transform.localScale;
+                editorVector.z = distanceBetweenPoints;
+                newEdge.transform.localScale = editorVector;
+
+                newEdgeMesh.Mesh.Clear();
+                newEdgeMesh.Mesh.Add(newEdge.GetComponent<MeshRenderer>());
+
+                ViewArrow();
+                ViewWeights(_weight);
+
+                edgeMeshs.Add(newEdgeMesh);
+            }
         }
     }
 
@@ -147,8 +250,14 @@ public class ViewGraph : MonoBehaviour
                                           parentArrows);
 
         newArrow.transform.LookAt(point1.transform);
-
         newArrow.name = "ArrowEdge_" + point0.name + "_" + point1.name;
+
+        MeshRenderer [] newArrowMeshs = newArrow.GetComponentsInChildren<MeshRenderer>();
+
+        for (int i = 0; i < newArrowMeshs.Length; i++)
+        {
+            newEdgeMesh.Mesh.Add(newArrowMeshs[i]);
+        }
     }
 
     /// <summary>
@@ -163,7 +272,7 @@ public class ViewGraph : MonoBehaviour
     /// <summary>
     /// Показываем веса рёбер
     /// </summary>
-    private void ViewWeights(int _numberEdge)
+    private void ViewWeights(int _weight)
     {
         GameObject newWeightsObject = Instantiate(prefabWeight,
                                                   PositionInCanvas(editorVector),
@@ -172,9 +281,16 @@ public class ViewGraph : MonoBehaviour
 
         string nameEdge = point0.name + "_" + point1.name;
         newWeightsObject.name = "InterfacenewWeights_" + nameEdge;
-        newWeightsObject.GetComponent<ViewText>().View(Graph.Instance.Edges[_numberEdge].Weight.ToString());
+        newWeightsObject.GetComponent<ViewText>().View(_weight.ToString());
     }
     #endregion StartViewGraph
+}
 
-
+/// <summary>
+/// Меши ребра
+/// </summary>
+[System.Serializable]
+public class EdgeMesh
+{
+    public List <MeshRenderer> Mesh = new List<MeshRenderer> ();
 }
