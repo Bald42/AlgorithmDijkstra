@@ -21,7 +21,9 @@ public class FindPath : MonoBehaviour
 
     [SerializeField]
     private List<DijkstraGraphPoint> graphPoints = new List<DijkstraGraphPoint> ();
-    //private List<DijkstraGraphPoint> graphPoints = new List<DijkstraGraphPoint>();
+
+    [SerializeField]
+    private List<GameObject> dijkstraPath = new List<GameObject>();
 
     private void Awake()
     {
@@ -94,18 +96,19 @@ public class FindPath : MonoBehaviour
     {
         if (!point0)
         {
-            point0 = _point;
-            OnPoint(point0, ColorMaterials.Color.Green);
+            point0 = _point;     
+            OnPoint(point0, ColorMaterials.Color.Red);
         }
         else
         {
             if (point0 == _point)
             {
-                if (point1)
-                {
-                    OnPoint(point1, ColorMaterials.Color.White);
-                }
-                OnPoint(point0, ColorMaterials.Color.White);
+               // if (point1)
+                //{
+                //    OnPoint(point1, ColorMaterials.Color.White);
+                //}
+                //ViewPath(ColorMaterials.Color.White);
+                ClearPath();
                 point0 = null;
             }
             else
@@ -124,29 +127,20 @@ public class FindPath : MonoBehaviour
                     point1 = _point;
                     OnPoint(point1, ColorMaterials.Color.Red);
                     GetPath();
+                    ViewPath(ColorMaterials.Color.Green);
                 }
-                /*
-                //TODO исправить на отрицание
-                if (IsFindPathDijkstra())
-                {
-                    OnPoint(point1, ColorMaterials.Color.Red);
-                }
-                else
-                {
-                    OnPoint(point1, ColorMaterials.Color.Green);
-                }
-                */
             }
         }
     }
 
-
     private void GetPath()
     {
-        NewListDijlstra();
+        NewListDijkstra();
         GameObject newPoint = point0;
         int weightPath = 0;
         bool isFind = false;
+
+        ClearPath();
 
         while (!isFind)
         {
@@ -161,14 +155,15 @@ public class FindPath : MonoBehaviour
                         {
                             if (Graph.Instance.Points[i].Edges[j].PointEdge == Graph.Instance.Points[k].Point)
                             {
-                                Debug.LogError("1");
-                                Debug.LogError("Graph.Instance.Points[k].Point = " + Graph.Instance.Points[k].Point);
-                                if (Graph.Instance.Points[i].Edges[j].Weight < graphPoints[k].Weight)
+                                if (Graph.Instance.Points[i].Edges[j].Weight + weightPath < graphPoints[k].Weight)
                                 {
-                                    Debug.LogError("2");
-                                    Debug.LogError("graphPoints[k].Weight = " + graphPoints[k].Weight);
                                     graphPoints[k].Weight = Graph.Instance.Points[i].Edges[j].Weight + weightPath;
                                     graphPoints[k].index = i;
+                                    Debug.LogError("1");
+                                    Debug.LogError("Graph.Instance.Points[k].Point = " + Graph.Instance.Points[k].Point);
+                                    Debug.LogError("graphPoints[k].Weight = " + graphPoints[k].Weight);
+                                    //TODO найти правильный индекс
+                                    Debug.LogError("graphPoints[k].index = " + graphPoints[k].index);
                                 }
                             }
                         }
@@ -196,8 +191,9 @@ public class FindPath : MonoBehaviour
             }
 
             graphPoints[minIndex].isActive = true;
-            weightPath += min;
+            weightPath = min;
 
+            Debug.LogError("weightPath = " + weightPath);
             if (Graph.Instance.Points[minIndex].Point == point1)
             {
                 Debug.LogError("find");                
@@ -206,16 +202,16 @@ public class FindPath : MonoBehaviour
             else
             {
                 newPoint = graphPoints[minIndex].Point;
+                Debug.LogError("newPoint = " + newPoint.name);
             }
         }
-
-
-
+        CreatePath();        
     }
-
-
-
-    private void NewListDijlstra ()
+    
+    /// <summary>
+    /// Заполняем новый лист графа для поиска пути
+    /// </summary>
+    private void NewListDijkstra ()
     {
         graphPoints.Clear();        
 
@@ -235,97 +231,59 @@ public class FindPath : MonoBehaviour
     }
 
     /// <summary>
-    /// Поиск пути
+    /// Очищаем путь
     /// </summary>
-    /*private void GetPath()
+    private void ClearPath()
     {
-        DijkstraGraphPoint p1 = new DijkstraGraphPoint();
-        DijkstraGraphPoint p2 = new DijkstraGraphPoint();
-        List<DijkstraGraphPoint> notVisited = new List<DijkstraGraphPoint>();
-
-        for (int i = 0; i < Graph.Instance.Points.Count; i++)
+        for (int i = 0; i < dijkstraPath.Count; i++)
         {
-            if (Graph.Instance.Points[i].Point == point0)
-            {
-                p1 = graphPoints[i];
-            }
-
-            if (Graph.Instance.Points[i].Point == point1)
-            {
-                p2 = graphPoints[i];
-            }
-
-            notVisited.Add(graphPoints[i]);
+            OnPoint(dijkstraPath[i], ColorMaterials.Color.White);
         }
+        dijkstraPath.Clear();
+    }
 
-        Dictionary<DijkstraGraphPoint, DijkstraPoint> path = new Dictionary <DijkstraGraphPoint, DijkstraPoint> ();
+    /// <summary>
+    /// Записываем кратчайший путь
+    /// </summary>
+    private void CreatePath ()
+    {
+        bool _isFindPath = false;
+        GameObject _currentPoint = point1;
+        List<GameObject> tempPath = new List<GameObject>();
 
-        path.Add(p1, new DijkstraPoint() { PrevPoint = null, Weight = 0 });
-
-        Debug.LogError("0");
-
-        while (true)
+        while (!_isFindPath)
         {
-            DijkstraGraphPoint currentPoint = null;
-            int bestWeight = int.MaxValue;
-            Debug.LogError("1");
-            foreach (var p in notVisited)
+            for (int i = graphPoints.Count-1; i >= 0; i--)
             {
-                if (path.ContainsKey(p) && path[p].Weight < bestWeight)
+                if (graphPoints[i].Point == _currentPoint)
                 {
-                    
-                    currentPoint = p;
-                    bestWeight = path[p].Weight;
-                    Debug.LogError("2");
-                    Debug.LogError("currentPoint = " + currentPoint);
+                    dijkstraPath.Add(_currentPoint);
+                    _currentPoint = graphPoints[graphPoints[i].index].Point;
                 }
             }
 
-            if (currentPoint == null)
+            if (_currentPoint == point0)
             {
-                //нет пути
-                Debug.LogError("6");
-                return;
+                _isFindPath = true;
             }
-
-            if (currentPoint == p2)
-            {
-                Debug.LogError("7");
-                break;
-            }
-
-            foreach (var next in currentPoint.NextPoints)
-            {
-                Debug.LogError("3");
-                int w = path[currentPoint].Weight + next.Weight;
-                Debug.LogError("path[currentPoint].Weight = " + path[currentPoint].Weight);
-                Debug.LogError("next.Weight = " + next.Weight);
-
-                if (!path.ContainsKey(next) || path[next].Weight > w)
-                {
-                    Debug.LogError("333");
-                    path[next] = new DijkstraPoint() { PrevPoint = currentPoint, Weight = w };
-                }
-            }
-
-            notVisited.Remove(currentPoint);
         }
 
-        List<DijkstraGraphPoint> ret = new List<DijkstraGraphPoint>();
-
-        var end = p2;
-
-        Debug.LogError("4");
-        while (end != null)
+        /*for (int i = tempPath.Count-1; i >=0 ;i--)
         {
-            Debug.LogError("5");
-            ret.Add(end);
-            end = path[end].PrevPoint;
-            OnPoint(end.Point, ColorMaterials.Color.Red);
+            dijkstraPath.Add(tempPath[i]);
+        }*/
+    }
+
+    /// <summary>
+    /// Показываем путь
+    /// </summary>
+    private void ViewPath (ColorMaterials.Color _color)
+    {
+        for (int i = 1; i < dijkstraPath.Count; i++)
+        {
+            OnPoint(dijkstraPath[i], _color);
         }
-    }*/
-
-
+    }
 }
 
 [System.Serializable]
@@ -336,21 +294,3 @@ public class DijkstraGraphPoint
     public bool isActive = false;
     public int index = 0;
 }
-
-/*
-[System.Serializable]
-public class DijkstraGraphPoint
-{
-    public int Weight = 0;
-    public GameObject Point = null;
-    public List<DijkstraGraphPoint> NextPoints;
-}
-
-[System.Serializable]
-public class DijkstraPoint
-{
-    public int Weight = 0;
-    public DijkstraGraphPoint PrevPoint;
-}
-*/
-
