@@ -86,12 +86,14 @@ public class FindPath : MonoBehaviour
                     point1 = _point;
                     OnPoint(point1, ColorMaterials.Red);
                     GetPath();
-                    ViewPath(ColorMaterials.Green);
                 }
             }
         }
     }
 
+    /// <summary>
+    /// Ищем путь
+    /// </summary>
     private void GetPath()
     {
         NewListDijkstra();
@@ -199,6 +201,15 @@ public class FindPath : MonoBehaviour
     /// </summary>
     private void CreatePath ()
     {
+        StartCoroutine(DelayCreatePath());
+    }
+
+    //TODO пытался сделать через метод, но постаянно выпадала ошибка памяти. Разобраться и поправить
+    /// <summary>
+    /// Заполняем лист пути
+    /// </summary>    
+    private IEnumerator DelayCreatePath ()
+    {
         bool _isFindPath = false;
         GameObject _currentPoint = point1;
         tempPath.Clear();
@@ -212,14 +223,16 @@ public class FindPath : MonoBehaviour
                 {
                     tempPath.Add(_currentPoint);
                     _currentPoint = graphPoints[graphPoints[i].index].Point;
+                    break;
                 }
+                yield return null;
             }
 
             if (_currentPoint == point0)
             {
                 tempPath.Add(_currentPoint);
                 _isFindPath = true;
-            }
+            }           
         }
 
         for (int i = tempPath.Count - 1; i >= 0; i--)
@@ -227,8 +240,9 @@ public class FindPath : MonoBehaviour
             dijkstraPath.Add(tempPath[i]);
             _textPath += tempPath[i].name + " - ";
         }
-
+        
         OnViewText(_textPath);
+        ViewPath(ColorMaterials.Green);
     }
 
     /// <summary>
@@ -244,7 +258,7 @@ public class FindPath : MonoBehaviour
 }
 
 /// <summary>
-/// 
+/// Параметры точки массива
 /// </summary>
 [System.Serializable]
 public class DijkstraGraphPoint
