@@ -65,6 +65,7 @@ public class FindPath : MonoBehaviour
         {
             if (point0 == _point)
             {
+                OnViewText("");
                 OnPoint(point0, ColorMaterials.White);
                 ClearPath();
                 point0 = null;
@@ -72,20 +73,15 @@ public class FindPath : MonoBehaviour
             }
             else
             {
-                if (point1)
-                {
-                    OnPoint(point1, ColorMaterials.White);
-                }
-
-                if (point1 == _point)
-                {                    
-                    point1 = null;
-                }
-                else
-                {
-                    point1 = _point;
-                    OnPoint(point1, ColorMaterials.Red);
+                if (point1 != _point)
+                {   
+                    if (point1)
+                    {
+                        OnPoint(point1, ColorMaterials.White);
+                    }
+                    point1 = _point;                    
                     GetPath();
+                    ViewPath(ColorMaterials.Green);
                 }
             }
         }
@@ -159,7 +155,7 @@ public class FindPath : MonoBehaviour
                 newPoint = graphPoints[minIndex].Point;
             }
         }
-        CreatePath();        
+        CreatePath(point0,point1);        
     }
     
     /// <summary>
@@ -197,52 +193,35 @@ public class FindPath : MonoBehaviour
     }
 
     /// <summary>
-    /// Записываем кратчайший путь
-    /// </summary>
-    private void CreatePath ()
-    {
-        StartCoroutine(DelayCreatePath());
-    }
-
-    //TODO пытался сделать через метод, но постаянно выпадала ошибка памяти. Разобраться и поправить
-    /// <summary>
     /// Заполняем лист пути
     /// </summary>    
-    private IEnumerator DelayCreatePath ()
+    private void CreatePath(GameObject _point0, GameObject _point1)
     {
-        bool _isFindPath = false;
-        GameObject _currentPoint = point1;
+        GameObject _currentPoint = _point1;
         tempPath.Clear();
         string _textPath = "";
 
-        while (!_isFindPath)
+        while (_currentPoint != _point0)
         {
+            tempPath.Add(_currentPoint);
             for (int i = 0; i < graphPoints.Count; i++)
             {
                 if (graphPoints[i].Point == _currentPoint)
                 {
-                    tempPath.Add(_currentPoint);
                     _currentPoint = graphPoints[graphPoints[i].index].Point;
                     break;
                 }
-                yield return null;
             }
-
-            if (_currentPoint == point0)
-            {
-                tempPath.Add(_currentPoint);
-                _isFindPath = true;
-            }           
         }
+
+        tempPath.Add(_point0);
 
         for (int i = tempPath.Count - 1; i >= 0; i--)
         {
             dijkstraPath.Add(tempPath[i]);
-            _textPath += tempPath[i].name + " - ";
+            _textPath += (i == tempPath.Count - 1 ? "" : " - ") + tempPath[i].name;
         }
-        
         OnViewText(_textPath);
-        ViewPath(ColorMaterials.Green);
     }
 
     /// <summary>
@@ -253,6 +232,11 @@ public class FindPath : MonoBehaviour
         for (int i = 1; i < dijkstraPath.Count; i++)
         {
             OnPoint(dijkstraPath[i], _color);
+        }
+
+        if (dijkstraPath.Count == 0)
+        {
+            OnPoint(point1, ColorMaterials.Red);
         }
     }
 }
