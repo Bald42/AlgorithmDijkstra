@@ -8,7 +8,10 @@ using UnityEngine;
 public class FindPath : MonoBehaviour
 {
     public delegate void PoinEventHandler(GameObject newPoint, ColorMaterials color);
-    public static event PoinEventHandler OnPoint = delegate { };
+    public static event PoinEventHandler OnViewPoint = delegate { };
+
+    public delegate void ViewArrowsEventHandler (List <GameObject> listPoints, ColorMaterials color);
+    public static event ViewArrowsEventHandler OnViewArrows = delegate { };
 
     public delegate void ViewTextHandler (string info);
     public static event ViewTextHandler OnViewText = delegate { };
@@ -59,14 +62,14 @@ public class FindPath : MonoBehaviour
         if (!point0)
         {
             point0 = _point;     
-            OnPoint(point0, ColorMaterials.Red);
+            OnViewPoint(point0, ColorMaterials.Red);
         }
         else
         {
             if (point0 == _point)
             {
                 OnViewText("");
-                OnPoint(point0, ColorMaterials.White);
+                OnViewPoint(point0, ColorMaterials.White);
                 ClearPath();
                 point0 = null;
                 point1 = null;
@@ -77,11 +80,11 @@ public class FindPath : MonoBehaviour
                 {   
                     if (point1)
                     {
-                        OnPoint(point1, ColorMaterials.White);
+                        OnViewPoint(point1, ColorMaterials.White);
                     }
                     point1 = _point;                    
                     GetPath();
-                    ViewPath(ColorMaterials.Green);
+                    ViewPath();
                 }
             }
         }
@@ -137,7 +140,6 @@ public class FindPath : MonoBehaviour
 
             if (minIndex == -1)
             {
-                Debug.LogError("NotFind");
                 OnViewText("нет пути " + point0.name + "-" + point1.name);
                 return;
             }
@@ -146,8 +148,7 @@ public class FindPath : MonoBehaviour
             weightPath = min;
 
             if (Graph.Instance.Points[minIndex].Point == point1)
-            {
-                Debug.LogError("find");                
+            {             
                 isFind = true;
             }
             else
@@ -185,9 +186,10 @@ public class FindPath : MonoBehaviour
     /// </summary>
     private void ClearPath()
     {
+        OnViewArrows(dijkstraPath, ColorMaterials.White);
         for (int i = 1; i < dijkstraPath.Count; i++)
         {
-            OnPoint(dijkstraPath[i], ColorMaterials.White);
+            OnViewPoint(dijkstraPath[i], ColorMaterials.White);
         }
         dijkstraPath.Clear();
     }
@@ -227,16 +229,18 @@ public class FindPath : MonoBehaviour
     /// <summary>
     /// Показываем путь
     /// </summary>
-    private void ViewPath (ColorMaterials _color)
+    private void ViewPath ()
     {
+        OnViewArrows(dijkstraPath, ColorMaterials.Green);
+
         for (int i = 1; i < dijkstraPath.Count; i++)
         {
-            OnPoint(dijkstraPath[i], _color);
+            OnViewPoint(dijkstraPath[i], ColorMaterials.Green);
         }
 
         if (dijkstraPath.Count == 0)
         {
-            OnPoint(point1, ColorMaterials.Red);
+            OnViewPoint(point1, ColorMaterials.Red);
         }
     }
 }

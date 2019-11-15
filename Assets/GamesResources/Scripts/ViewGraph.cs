@@ -77,14 +77,16 @@ public class ViewGraph : MonoBehaviour
     /// <summary>Подписки</summary>
     private void Subscribe()
     {
-        FindPath.OnPoint += OnPoint;
+        FindPath.OnViewArrows += OnViewArrows;
+        FindPath.OnViewPoint += OnViewPoint;
         FindPath.OnViewText += OnViewText;
     }
 
     /// <summary>Отписки</summary>
     private void UnSubscribe()
     {
-        FindPath.OnPoint -= OnPoint;
+        FindPath.OnViewArrows -= OnViewArrows;
+        FindPath.OnViewPoint -= OnViewPoint;
         FindPath.OnViewText -= OnViewText;
     }
 
@@ -100,35 +102,39 @@ public class ViewGraph : MonoBehaviour
     /// <summary>
     /// Обработчик события выделения вершины графа
     /// </summary>
-    private void OnPoint (GameObject _newPoint, ColorMaterials _color)
+    private void OnViewPoint (GameObject _newPoint, ColorMaterials _color)
     {
         for (int i=0; i < pointsMesh.Count; i++)
         {
             if (pointsMesh[i].gameObject == _newPoint)
             {
-                switch (_color)
-                {
-                    case ColorMaterials.White:
-                        {
-                            pointsMesh[i].material = materialWhite;
-                            break;
-                        }
-                    case ColorMaterials.Green:
-                        {
-                            pointsMesh[i].material = materialGreen;
-                            break;
-                        }
-                    case ColorMaterials.Red:
-                        {
-                            pointsMesh[i].material = materialRed;
-                            break;
-                        }
-                    default:
-                        {
-                            break;
-                        }
-                }
+                ApplyColor(pointsMesh[i], _color);
                 break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Обработчик события отрисовки рёбер
+    /// </summary>
+    /// <param name="_listPoints"></param>
+    /// <param name="_color"></param>
+    private void OnViewArrows (List <GameObject> _listPoints, ColorMaterials _color)
+    {
+        for (int i=0; i < _listPoints.Count - 1; i++)
+        {
+            string _newName = _listPoints[i].name + "-" + _listPoints[i + 1].name;            
+
+            for (int j=0; j < edgeMeshs.Count; j++)
+            {
+                if (_newName == edgeMeshs[j].NameEdge)
+                {
+                    for (int k = 0; k < edgeMeshs[j].Mesh.Count; k++)
+                    {
+                        ApplyColor(edgeMeshs[j].Mesh[k], _color);
+                    }
+                    break;
+                }
             }
         }
     }
@@ -200,11 +206,12 @@ public class ViewGraph : MonoBehaviour
     private void ViewEdges ()
     {
         for (int i=0; i < Graph.Instance.Points.Count; i ++)
-        {
+        {            
             point0 = Graph.Instance.Points[i].Point;
-
             for (int j = 0; j < Graph.Instance.Points[i].Edges.Count; j++)
             {
+                newEdgeMesh = new EdgeMesh();
+
                 point1 = Graph.Instance.Points[i].Edges[j].PointEdge;
                 int _weight = Graph.Instance.Points[i].Edges[j].Weight;
 
@@ -226,8 +233,8 @@ public class ViewGraph : MonoBehaviour
                 editorVector.z = distanceBetweenPoints;
                 newEdge.transform.localScale = editorVector;
 
-                newEdgeMesh.Mesh.Clear();
                 newEdgeMesh.Mesh.Add(newEdge.GetComponent<MeshRenderer>());
+                newEdgeMesh.NameEdge = point0.name + "-" + point1.name;
 
                 ViewArrow();
                 ViewWeights(_weight);
@@ -280,10 +287,41 @@ public class ViewGraph : MonoBehaviour
                                                   parentWeights);
 
         string nameEdge = point0.name + "_" + point1.name;
-        newWeightsObject.name = "InterfacenewWeights_" + nameEdge;
+        newWeightsObject.name = "InterfaceWeights_" + nameEdge;
         newWeightsObject.GetComponent<ViewText>().View(_weight.ToString());
     }
     #endregion StartViewGraph
+
+    /// <summary>
+    /// Применяем цвет на объектах
+    /// </summary>
+    /// <param name="_objectMaterial"></param>
+    /// <param name="_color"></param>
+    private void ApplyColor (MeshRenderer _mesh, ColorMaterials _newColor)
+    {
+        switch (_newColor)
+        {
+            case ColorMaterials.White:
+                {
+                    _mesh.material = materialWhite;
+                    break;
+                }
+            case ColorMaterials.Green:
+                {
+                    _mesh.material = materialGreen;
+                    break;
+                }
+            case ColorMaterials.Red:
+                {
+                    _mesh.material = materialRed;
+                    break;
+                }
+            default:
+                {
+                    break;
+                }
+        }
+    }
 }
 
 /// <summary>
@@ -292,5 +330,6 @@ public class ViewGraph : MonoBehaviour
 [System.Serializable]
 public class EdgeMesh
 {
+    public string NameEdge = "";
     public List <MeshRenderer> Mesh = new List<MeshRenderer> ();
 }
